@@ -1,0 +1,6 @@
+# jitpack builds & publishes only the library module (the :app harness is dev-only).
+# Resolves contracts + NewPipeExtractor from jitpack; needs the Android SDK, which jitpack provides.
+jdk:
+  - openjdk17
+install:
+  - ./gradlew :capullo-source-radiobrowser:publishToMavenLocal -x test -x lint
