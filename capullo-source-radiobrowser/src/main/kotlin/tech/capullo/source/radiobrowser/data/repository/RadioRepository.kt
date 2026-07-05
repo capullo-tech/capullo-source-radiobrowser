@@ -1,5 +1,6 @@
 package tech.capullo.source.radiobrowser.data.repository
 
+import android.content.Context
 import com.google.gson.Gson
 import tech.capullo.source.radiobrowser.data.api.RadioBrowserApi
 import tech.capullo.source.radiobrowser.data.db.AppDatabase
@@ -20,6 +21,14 @@ data class FavoritesBackup(
 )
 
 class RadioRepository(private val db: AppDatabase, serverUrl: String = "https://de1.api.radio-browser.info/") {
+
+    /**
+     * App-DI convenience: build the favorites DB from a [Context] so consumers need not depend on Room
+     * or reference [AppDatabase] - keeping Room an implementation detail of this library (parity with the
+     * ktor client staying internal to capullo-audio's SnapcastControlClient).
+     */
+    constructor(context: Context, serverUrl: String = "https://de1.api.radio-browser.info/") :
+        this(AppDatabase.getInstance(context), serverUrl)
 
     private var currentServerUrl = serverUrl
     private var api = RadioBrowserApi.create(serverUrl)
