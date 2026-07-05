@@ -44,3 +44,7 @@ Requires JDK 17 and the Android SDK. Contracts resolve from jitpack, or from a s
 
 AGP 9.1.0 · Kotlin 2.3.10 · KSP 2.3.9 · Room 2.8.4 · Retrofit 2.11.0 · OkHttp 4.12.0 - the
 the org standard.
+
+## License
+
+Copyright 2026 capullo-tech. Licensed under GPLv3 - see [`LICENSE`](LICENSE) (extracted from QuantumCast).
