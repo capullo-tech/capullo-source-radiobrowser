@@ -6,3 +6,5 @@ build/
 local.properties
 .DS_Store
 .cxx/
+build-share.log
+run-rb-onC.cmd

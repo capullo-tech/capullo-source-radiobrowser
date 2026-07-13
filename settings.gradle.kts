@@ -16,8 +16,14 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        // capullo-audio-contracts (published) + NewPipeExtractor (com.github.TeamNewPipe).
+        // capullo-audio-contracts + NewPipeExtractor + build-conventions catalog (all jitpack).
         maven { url = uri("https://jitpack.io") }
+    }
+    versionCatalogs {
+        // Shared org toolchain, pinned by commit from jitpack.
+        create("libs") { from("com.github.capullo-tech:build-conventions:b07e979") }
+        // Local pins: the SPI coordinate + this source's own deps (retrofit/gson/okhttp/newpipe).
+        create("pins") { from(files("gradle/pins.versions.toml")) }
     }
 }
 

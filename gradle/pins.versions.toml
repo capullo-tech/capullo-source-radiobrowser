@@ -1,0 +1,25 @@
+# capullo-source-radiobrowser LOCAL pins catalog (`pins.*`) - the SPI coordinate (pinned
+# independently per release, the org) + this source's OWN third-party deps
+# (used by no other repo). Everything shared (toolchain, Room, coroutines, core-ktx, test) comes
+# from the shared `libs` catalog.
+[versions]
+# Contracts (Layer 1): jitpack coordinate; composite build substitutes the sibling when present.
+contracts = "main-SNAPSHOT"
+# Radio Browser ingress deps (single-repo).
+retrofit = "2.11.0"
+gson = "2.11.0"
+okhttp = "4.12.0"
+# NewPipeExtractor (YouTube link enrichment) - jitpack tag as published by TeamNewPipe.
+newpipe = "v0.24.2"
+
+[libraries]
+# The integrator SPI (Layer 1). jitpack coordinate; composite build substitutes it locally.
+capullo-audio-contracts = { module = "com.github.capullo-tech:capullo-audio-contracts", version.ref = "contracts" }
+# Radio Browser HTTP API + JSON models.
+retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
+retrofit-converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "retrofit" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
+# Playlist/HLS resolution + Shazam stream capture and API calls.
+okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
+# YouTube search for identified-track links (in NowPlaying.extras).
+newpipe-extractor = { module = "com.github.TeamNewPipe:NewPipeExtractor", version.ref = "newpipe" }

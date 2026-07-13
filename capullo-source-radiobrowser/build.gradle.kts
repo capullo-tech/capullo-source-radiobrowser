@@ -41,23 +41,23 @@ android {
 dependencies {
     // Layer 1 SPI - `api` because the public surface implements/returns its types
     // (MediaSourceProvider, NowPlaying via NowPlayingSource, PlaybackQueue).
-    api(libs.capullo.audio.contracts)
+    api(pins.capullo.audio.contracts)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.kotlinx.coroutines.android)
 
     // Radio Browser API + JSON models.
-    implementation(libs.retrofit)
-    implementation(libs.retrofit.converter.gson)
-    implementation(libs.gson)
+    implementation(pins.retrofit)
+    implementation(pins.retrofit.converter.gson)
+    implementation(pins.gson)
     // Playlist/HLS resolution (PlaylistResolver) + Shazam stream capture/API (AudioCapturer, ShazamApiClient).
-    implementation(libs.okhttp)
+    implementation(pins.okhttp)
     // Favorites/groups persistence.
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
     // YouTube link enrichment for identified tracks (YoutubeSearcher).
-    implementation(libs.newpipe.extractor)
+    implementation(pins.newpipe.extractor)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
