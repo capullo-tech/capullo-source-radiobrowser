@@ -1,9 +1,12 @@
 # capullo-source-radiobrowser
 
-Radio Browser **media source** for the [Capullo Audio Platform](https://github.com/capullo-tech)
-(Layer 3 - the integrator seam). It implements the `capullo-audio-contracts` SPI so the shared
+Radio Browser **media source** for the [Capullo Audio Platform](https://github.com/capullo-tech).
+It implements the `capullo-audio-contracts` SPI so the shared
 delivery engine [`capullo-audio`](https://github.com/capullo-tech/capullo-audio) can broadcast
 internet radio without knowing anything about Radio Browser, playlists, or track identification.
+
+This library does not depend on the engine, nor the engine on it - they are siblings meeting at the
+SPI. See [Platform shape](https://github.com/capullo-tech/capullo-audio-contracts#platform-shape).
 
 ## What it does
 

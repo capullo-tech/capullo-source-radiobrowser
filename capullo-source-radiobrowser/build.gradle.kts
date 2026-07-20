@@ -39,7 +39,7 @@ android {
 }
 
 dependencies {
-    // Layer 1 SPI - `api` because the public surface implements/returns its types
+    // The SPI - `api` because the public surface implements/returns its types
     // (MediaSourceProvider, NowPlaying via NowPlayingSource, PlaybackQueue).
     api(pins.capullo.audio.contracts)
 

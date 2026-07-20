@@ -22,7 +22,7 @@ import tech.capullo.source.radiobrowser.resolver.PlaylistResolver
 import tech.capullo.source.radiobrowser.shazam.ShazamRecognizer
 
 /**
- * The radiobrowser integrator - the *first* real implementation of the platform SPI
+ * The radiobrowser source - the *first* real implementation of the platform SPI
  * ([MediaSourceProvider] + [NowPlayingSource]), for QuantumCast-style internet radio. It proves the
  * `capullo-audio-contracts` seam is implementable end-to-end .
  *
