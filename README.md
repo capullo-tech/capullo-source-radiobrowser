@@ -18,8 +18,8 @@ SPI. See [Platform shape](https://github.com/capullo-tech/capullo-audio-contract
   with `isRotating = true`.
 - **Assembles now-playing + identifies tracks.** `NowPlaying` starts from the station's own tags
   (name → album, country / codec / bitrate → `extras`) and is enriched with title/artist and
-  streaming links (YouTube / Spotify / Apple Music) by a Shazam loop that fetches the stream itself
-  - no engine coupling.
+  streaming links (YouTube / Spotify / Apple Music) by a Shazam loop that fetches the stream
+  itself - no engine coupling.
 
 ## Layout
 
