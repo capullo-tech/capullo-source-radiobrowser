@@ -1,9 +1,9 @@
 # capullo-source-radiobrowser LOCAL pins catalog (`pins.*`) - the SPI coordinate (pinned
-# independently per release, the org) + this source's OWN third-party deps
+# independently per release) + this source's OWN third-party deps
 # (used by no other repo). Everything shared (toolchain, Room, coroutines, core-ktx, test) comes
 # from the shared `libs` catalog.
 [versions]
-# Contracts (Layer 1): jitpack coordinate; composite build substitutes the sibling when present.
+# Contracts: jitpack coordinate; composite build substitutes the sibling when present.
 contracts = "main-SNAPSHOT"
 # Radio Browser ingress deps (single-repo).
 retrofit = "2.11.0"
@@ -13,7 +13,7 @@ okhttp = "4.12.0"
 newpipe = "v0.24.2"
 
 [libraries]
-# The integrator SPI (Layer 1). jitpack coordinate; composite build substitutes it locally.
+# The integrator SPI. jitpack coordinate; composite build substitutes it locally.
 capullo-audio-contracts = { module = "com.github.capullo-tech:capullo-audio-contracts", version.ref = "contracts" }
 # Radio Browser HTTP API + JSON models.
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
