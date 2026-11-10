@@ -2,14 +2,14 @@ package tech.capullo.source.radiobrowser.data.repository
 
 import android.content.Context
 import com.google.gson.Gson
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import tech.capullo.source.radiobrowser.data.api.RadioBrowserApi
 import tech.capullo.source.radiobrowser.data.db.AppDatabase
 import tech.capullo.source.radiobrowser.data.db.FavoriteEntity
 import tech.capullo.source.radiobrowser.data.db.FavoriteGroupEntity
 import tech.capullo.source.radiobrowser.data.model.Country
 import tech.capullo.source.radiobrowser.data.model.Station
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.UUID
@@ -17,7 +17,7 @@ import java.util.UUID
 data class FavoritesBackup(
     val version: Int = 1,
     val groups: List<FavoriteGroupEntity> = emptyList(),
-    val favorites: List<FavoriteEntity> = emptyList()
+    val favorites: List<FavoriteEntity> = emptyList(),
 )
 
 class RadioRepository(private val db: AppDatabase, serverUrl: String = "https://de1.api.radio-browser.info/") {
@@ -56,8 +56,7 @@ class RadioRepository(private val db: AppDatabase, serverUrl: String = "https://
 
     suspend fun getCountries(): List<Country> = api.getCountries()
 
-    suspend fun getStationsByCountry(country: String, limit: Int = 40): List<Station> =
-        api.getStationsByCountry(country, limit)
+    suspend fun getStationsByCountry(country: String, limit: Int = 40): List<Station> = api.getStationsByCountry(country, limit)
 
     fun getFavorites(): Flow<List<FavoriteEntity>> = db.favoriteDao().getAll()
 
@@ -77,8 +76,8 @@ class RadioRepository(private val db: AppDatabase, serverUrl: String = "https://
                     country = station.country,
                     tags = station.tags,
                     codec = station.codec,
-                    bitrate = station.bitrate
-                )
+                    bitrate = station.bitrate,
+                ),
             )
         }
     }
@@ -91,7 +90,10 @@ class RadioRepository(private val db: AppDatabase, serverUrl: String = "https://
         val id = UUID.randomUUID().toString()
         val groupDao = db.favoriteGroupDao()
         groupDao.insert(FavoriteGroupEntity(id = id, name = name, createdAt = System.currentTimeMillis()))
-        uuids.forEachIndexed { i, uuid -> db.favoriteDao().updateGroupId(uuid, id); db.favoriteDao().updateSortOrder(uuid, i) }
+        uuids.forEachIndexed { i, uuid ->
+            db.favoriteDao().updateGroupId(uuid, id)
+            db.favoriteDao().updateSortOrder(uuid, i)
+        }
         return id
     }
 
@@ -113,11 +115,9 @@ class RadioRepository(private val db: AppDatabase, serverUrl: String = "https://
         uuids.forEach { db.favoriteDao().updateGroupId(it, "") }
     }
 
-    suspend fun updateFavoriteSortOrder(uuid: String, sortOrder: Int) =
-        db.favoriteDao().updateSortOrder(uuid, sortOrder)
+    suspend fun updateFavoriteSortOrder(uuid: String, sortOrder: Int) = db.favoriteDao().updateSortOrder(uuid, sortOrder)
 
-    suspend fun updateGroupSortOrder(id: String, sortOrder: Int) =
-        db.favoriteGroupDao().updateSortOrder(id, sortOrder)
+    suspend fun updateGroupSortOrder(id: String, sortOrder: Int) = db.favoriteGroupDao().updateSortOrder(id, sortOrder)
 
     /** Writes all favorites and groups as JSON. Returns the number of favorites written. */
     suspend fun exportFavorites(outputStream: OutputStream): Int {
@@ -135,9 +135,11 @@ class RadioRepository(private val db: AppDatabase, serverUrl: String = "https://
         val backup = inputStream.bufferedReader().use {
             runCatching { Gson().fromJson(it, FavoritesBackup::class.java) }.getOrNull()
         } ?: return null
+
         // Gson leaves Kotlin non-null fields null when the JSON lacks them.
         @Suppress("SENSELESS_COMPARISON")
         val favorites = (if (backup.favorites == null) emptyList() else backup.favorites).filter { it.uuid != null && it.url != null }
+
         @Suppress("SENSELESS_COMPARISON")
         val groups = (if (backup.groups == null) emptyList() else backup.groups).filter { it.id != null && it.name != null }
         if (favorites.isEmpty() && groups.isEmpty()) return null
