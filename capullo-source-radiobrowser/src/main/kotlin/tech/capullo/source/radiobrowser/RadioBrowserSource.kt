@@ -43,7 +43,8 @@ public class RadioBrowserSource(
     private val context: Context,
     private val scope: CoroutineScope,
     private val shazamIntervalSeconds: Int = 30,
-) : MediaSourceProvider, NowPlayingSource {
+) : MediaSourceProvider,
+    NowPlayingSource {
 
     private val _nowPlaying = MutableStateFlow(NowPlaying.EMPTY)
     override val nowPlaying: StateFlow<NowPlaying> = _nowPlaying.asStateFlow()
@@ -51,6 +52,7 @@ public class RadioBrowserSource(
     // The current rotation, addressed by the engine via station uuid (the queue's logical id).
     private val stationsByUuid = LinkedHashMap<String, Station>()
     private var order: List<String> = emptyList()
+
     @Volatile private var currentIndex: Int = 0
 
     private var shazamJob: Job? = null
@@ -92,14 +94,17 @@ public class RadioBrowserSource(
 
     // --- Now-playing assembly + Shazam enrichment ---
 
-    private fun currentStation(): Station? = order.getOrNull(currentIndex)?.let { stationsByUuid[it] }
+    private fun currentStation(): Station? = order.getOrNull(currentIndex)?.let {
+        stationsByUuid[it]
+    }
 
     /** Reset now-playing to the current station's own metadata and (re)start identification. */
     private fun onStationChanged() {
         val station = currentStation()
         if (station == null) {
             _nowPlaying.value = NowPlaying.EMPTY
-            shazamJob?.cancel(); shazamJob = null
+            shazamJob?.cancel()
+            shazamJob = null
             return
         }
         _nowPlaying.value = baseNowPlaying(station)
@@ -133,7 +138,9 @@ public class RadioBrowserSource(
         shazamJob = scope.launch(Dispatchers.IO) {
             delay(WARMUP_MS)
             while (isActive) {
-                val result = runCatching { ShazamRecognizer.recognize(station.streamUrl, context) }.getOrNull()
+                val result = runCatching {
+                    ShazamRecognizer.recognize(station.streamUrl, context)
+                }.getOrNull()
                 if (result != null && result.trackName.isNotBlank()) {
                     _nowPlaying.update { np ->
                         // Drop a late result that arrives after the station already changed.
@@ -144,16 +151,39 @@ public class RadioBrowserSource(
                                 title = result.trackName,
                                 artist = result.artistName,
                                 extras = np.extras + buildMap {
-                                    if (result.youtubeUrl.isNotBlank()) put("youtubeUrl", result.youtubeUrl)
-                                    if (result.spotifyUrl.isNotBlank()) put("spotifyUrl", result.spotifyUrl)
-                                    if (result.appleMusicUrl.isNotBlank()) put("appleMusicUrl", result.appleMusicUrl)
-                                    if (result.artworkUrl.isNotBlank()) put("artworkUrl", result.artworkUrl)
+                                    if (result.youtubeUrl.isNotBlank()) {
+                                        put(
+                                            "youtubeUrl",
+                                            result.youtubeUrl,
+                                        )
+                                    }
+                                    if (result.spotifyUrl.isNotBlank()) {
+                                        put(
+                                            "spotifyUrl",
+                                            result.spotifyUrl,
+                                        )
+                                    }
+                                    if (result.appleMusicUrl.isNotBlank()) {
+                                        put(
+                                            "appleMusicUrl",
+                                            result.appleMusicUrl,
+                                        )
+                                    }
+                                    if (result.artworkUrl.isNotBlank()) {
+                                        put(
+                                            "artworkUrl",
+                                            result.artworkUrl,
+                                        )
+                                    }
                                 },
                             )
                         }
                     }
                 }
-                delay((shazamIntervalSeconds - WARMUP_SECONDS).coerceAtLeast(MIN_INTERVAL_SECONDS) * 1000L)
+                delay(
+                    (shazamIntervalSeconds - WARMUP_SECONDS).coerceAtLeast(MIN_INTERVAL_SECONDS) *
+                        1000L,
+                )
             }
         }
     }

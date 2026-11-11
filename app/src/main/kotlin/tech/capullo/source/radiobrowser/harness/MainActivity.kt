@@ -39,7 +39,11 @@ class MainActivity : Activity() {
                 text = buildString {
                     appendLine("capullo-source-radiobrowser harness")
                     appendLine("source: ${source.javaClass.simpleName}")
-                    appendLine("queue: size=${queue.size} rotating=${queue.isRotating} id0=${queue.idAt(0)}")
+                    appendLine(
+                        "queue: size=${queue.size} rotating=${queue.isRotating} id0=${queue.idAt(
+                            0,
+                        )}",
+                    )
                     appendLine("nowPlaying: album=${np.album} extras=${np.extras}")
                 }
             },
