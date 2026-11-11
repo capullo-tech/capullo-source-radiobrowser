@@ -119,24 +119,90 @@ class RadioRepository(private val db: AppDatabase, serverUrl: String = "https://
     suspend fun updateGroupSortOrder(id: String, sortOrder: Int) =
         db.favoriteGroupDao().updateSortOrder(id, sortOrder)
 
-    suspend fun exportFavorites(outputStream: OutputStream) {
-        val backup = FavoritesBackup(
-            groups = db.favoriteGroupDao().getAllOnce(),
-            favorites = db.favoriteDao().getAllOnce()
-        )
+    /** Writes all favorites and groups as JSON. Returns the number of favorites written. */
+    suspend fun exportFavorites(outputStream: OutputStream): Int {
+        val favorites = db.favoriteDao().getAllOnce()
+        val backup = FavoritesBackup(groups = db.favoriteGroupDao().getAllOnce(), favorites = favorites)
         outputStream.bufferedWriter().use { Gson().toJson(backup, it) }
+        return favorites.size
     }
 
-    suspend fun importFavorites(inputStream: InputStream) {
+    /**
+     * Parses a backup without touching the database (for a preview before importing).
+     * Null when the stream isn't a favorites backup or holds nothing.
+     */
+    fun readFavoritesBackup(inputStream: InputStream): FavoritesBackup? {
         val backup = inputStream.bufferedReader().use {
             runCatching { Gson().fromJson(it, FavoritesBackup::class.java) }.getOrNull()
-        } ?: return
-        val favorites = backup.favorites ?: emptyList()
-        val groups = backup.groups ?: emptyList()
-        if (favorites.isEmpty() && groups.isEmpty()) return
-        db.favoriteDao().deleteAll()
-        db.favoriteGroupDao().deleteAll()
-        groups.forEach { db.favoriteGroupDao().insert(it) }
-        favorites.forEach { db.favoriteDao().insert(it) }
+        } ?: return null
+        // Gson leaves Kotlin non-null fields null when the JSON lacks them.
+        @Suppress("SENSELESS_COMPARISON")
+        val favorites = (if (backup.favorites == null) emptyList() else backup.favorites).filter { it.uuid != null && it.url != null }
+        @Suppress("SENSELESS_COMPARISON")
+        val groups = (if (backup.groups == null) emptyList() else backup.groups).filter { it.id != null && it.name != null }
+        if (favorites.isEmpty() && groups.isEmpty()) return null
+        return backup.copy(favorites = favorites, groups = groups)
+    }
+
+    data class ImportResult(val added: Int, val alreadyThere: Int, val groupsCreated: Int)
+
+    /**
+     * Imports [backup].
+     *
+     * Merge (default): keeps everything already here and adds only stations not yet favorited.
+     * A backup group whose name matches an existing group (case-insensitive) is combined with it;
+     * other groups are created after the existing ones. Imported stations go to the end of their
+     * group, keeping the backup's relative order.
+     *
+     * Replace: the previous behaviour - the database becomes exactly the backup.
+     */
+    suspend fun importFavorites(backup: FavoritesBackup, replace: Boolean = false): ImportResult {
+        val favDao = db.favoriteDao()
+        val groupDao = db.favoriteGroupDao()
+        if (replace) {
+            favDao.deleteAll()
+            groupDao.deleteAll()
+            backup.groups.forEach { groupDao.insert(it) }
+            backup.favorites.forEach { favDao.insert(it) }
+            return ImportResult(backup.favorites.size, 0, backup.groups.size)
+        }
+
+        val existingGroups = groupDao.getAllOnce()
+        val existingFavs = favDao.getAllOnce()
+        val haveUuids = existingFavs.map { it.uuid }.toHashSet()
+
+        // Backup group id → local group id (matched by name, or newly created).
+        var nextGroupOrder = (existingGroups.maxOfOrNull { it.sortOrder } ?: -1) + 1
+        var groupsCreated = 0
+        val groupMap = HashMap<String, String>()
+        for (g in backup.groups.sortedBy { it.sortOrder }) {
+            val match = existingGroups.firstOrNull { it.name.equals(g.name, ignoreCase = true) }
+            if (match != null) {
+                groupMap[g.id] = match.id
+            } else {
+                val id = UUID.randomUUID().toString()
+                groupDao.insert(FavoriteGroupEntity(id = id, name = g.name, sortOrder = nextGroupOrder++))
+                groupMap[g.id] = id
+                groupsCreated++
+            }
+        }
+
+        // Next free sort slot per local group ("" = ungrouped).
+        val nextOrder = existingFavs.groupBy { it.groupId }
+            .mapValues { (_, l) -> (l.maxOfOrNull { it.sortOrder } ?: -1) + 1 }.toMutableMap()
+        var added = 0
+        var already = 0
+        for (f in backup.favorites.sortedWith(compareBy({ it.groupId }, { it.sortOrder }))) {
+            if (!haveUuids.add(f.uuid)) {
+                already++
+                continue
+            }
+            val gid = groupMap[f.groupId] ?: ""
+            val order = nextOrder.getOrDefault(gid, 0)
+            nextOrder[gid] = order + 1
+            favDao.insert(f.copy(groupId = gid, sortOrder = order))
+            added++
+        }
+        return ImportResult(added, already, groupsCreated)
     }
 }
